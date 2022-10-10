@@ -19,29 +19,26 @@ class SpongebobStack(cdk.Stack):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST
         )
 
-        # Lambdas
-        characters_list = lambda_.Function(self, "character-list",
-            code=lambda_.Code.from_asset('./src'),
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            handler="character_list.handler",
-            environment={
-                "TABLE_NAME": table.table_name
-            }
-        )
-        table.grant_read_data(characters_list)
-
-        characters_get = lambda_.Function(self, "character-get",
-            code=lambda_.Code.from_asset('./src'),
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            handler="character_get.handler",
-            environment={
-                "TABLE_NAME": table.table_name
-            }
-        )
-        table.grant_read_data(characters_get)
-
         # API Gateway
         api = apigateway.RestApi(self, "spongebob-api")
         characters = api.root.add_resource("characters")
-        characters_list_integration = apigateway.LambdaIntegration(characters_list)
-        characters.add_method("GET", characters_list_integration)
+        character = api.root.add_resource("character").add_resource('{character}')
+
+        # Lambdas
+        characters_list = create_function(self, "characters_list", table, "GET", characters)
+        character_get = create_function(self, "character_get", table, "GET", character)
+
+
+def create_function(self, name, table, method, root):
+    lambda_function = lambda_.Function(self, name,
+        code=lambda_.Code.from_asset('./src'),
+        runtime=lambda_.Runtime.PYTHON_3_8,
+        handler=f"{name}.handler",
+        environment={
+            "TABLE_NAME": table.table_name
+        }
+    )
+    table.grant_read_data(lambda_function)
+    lambda_function_integration = apigateway.LambdaIntegration(lambda_function)
+    root.add_method(method, lambda_function_integration)
+
