@@ -12,3 +12,5 @@
 - list characters 
 - get specific character (link to fandom)
 - Create script to populate database with characters
+- add custom domain
+
