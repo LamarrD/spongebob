@@ -15,6 +15,13 @@ def handler(event, context):
         }
     )
 
+    if 'Item' not in response:
+        return {
+            "statusCode": 404,
+            'headers': {'Content-Type': 'application/json'},
+            "body": json.dumps({"error": "Character not found"})
+        }
+
     character = response['Item']['data']
 
     return {
