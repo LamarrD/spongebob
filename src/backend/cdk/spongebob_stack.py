@@ -31,7 +31,7 @@ class SpongebobStack(cdk.Stack):
 
 def create_function(self, name, table, method, root):
     lambda_function = lambda_.Function(self, name,
-        code=lambda_.Code.from_asset('./src'),
+        code=lambda_.Code.from_asset('../functions/'),
         runtime=lambda_.Runtime.PYTHON_3_8,
         handler=f"{name}.handler",
         environment={
