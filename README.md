@@ -16,5 +16,3 @@
 - add frontend
 - deploy canaries to run on a schedule
 - add monitoring (optional)
-
-
