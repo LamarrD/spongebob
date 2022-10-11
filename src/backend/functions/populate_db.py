@@ -9,7 +9,6 @@ table = boto3.resource('dynamodb').Table(table_name)
 
 
 # Data sourced from SpongeBob's Fandom Wiki
-
 def handler(event, context):
     base_url = "https://spongebob.fandom.com"
     res = requests.get(f"{base_url}/wiki/List_of_characters/Main")
@@ -34,13 +33,7 @@ def handler(event, context):
             "gallery_link": f"{base_url}/wiki/{main_char_id}/gallery",
         }
         # Add to DynamoDB
-        table.put_item(
-            Item={
-                "pk": "character",
-                "sk": main_char_id.lower(),
-                "data": data
-            }
-        )
+        table.put_item(Item={ "pk": "character", "sk": main_char_id.lower(), "data": data })
 
 
 
