@@ -1,4 +1,3 @@
-from unicodedata import name
 from constructs import Construct
 import aws_cdk as cdk
 from constructs import Construct
@@ -8,7 +7,7 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
 )
 
-class SpongebobStack(cdk.Stack):
+class BackendStack(cdk.Stack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
 
@@ -30,13 +29,12 @@ class SpongebobStack(cdk.Stack):
 
 
 def create_function(self, name, table, method, root):
+    """Helper function to create a lambda function and add it to the API Gateway."""
     lambda_function = lambda_.Function(self, name,
         code=lambda_.Code.from_asset('../functions/'),
         runtime=lambda_.Runtime.PYTHON_3_8,
         handler=f"{name}.handler",
-        environment={
-            "TABLE_NAME": table.table_name
-        }
+        environment={ "TABLE_NAME": table.table_name }
     )
     table.grant_read_data(lambda_function)
     lambda_function_integration = apigateway.LambdaIntegration(lambda_function)

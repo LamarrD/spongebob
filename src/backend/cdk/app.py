@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
-from spongebob_stack import SpongebobStack
+from stack import BackendStack
 
 
 app = cdk.App()
-SpongebobStack(app, "SpongebobStack",)
-
+BackendStack(app, "Spongebob-Backend")
 app.synth()
