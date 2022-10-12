@@ -2,6 +2,7 @@ import requests
 import boto3
 import os
 from bs4 import BeautifulSoup
+from random import randrange
 
 
 table_name = os.getenv('TABLE_NAME')
@@ -23,14 +24,18 @@ def handler(event, context):
         char_soup = BeautifulSoup(res.text, 'html.parser')
 
         data = {
+            "id": main_char_id.lower(),
             "full_name": char_soup.find_all('h2', {'data-source': 'name'})[0].text,
             "residence": char_soup.find_all('div', {'data-source': 'residence'})[0].find_all('div')[0].text,
             "job": char_soup.find_all('div', {'data-source': 'occupation(s)'})[0].find_all('div')[0].text,
             "gender": char_soup.find_all('div', {'data-source': 'gender'})[0].find_all('div')[0].text,
             "color": char_soup.find_all('div', {'data-source': 'color'})[0].find_all('div')[0].text,
             "species": char_soup.find_all('div', {'data-source': 'species'})[0].find_all('div')[0].text,
+            "default_image": char_soup.find_all('div', {'data-source': 'image'})[0].find_all('img')[0].attrs['src'],
             "link": char_link,
             "gallery_link": f"{base_url}/wiki/{main_char_id}/gallery",
+            "likes": str(randrange(1000)),
+            "dislikes": str(randrange(1000))
         }
         # Add to DynamoDB
         table.put_item(Item={ "pk": "character", "sk": main_char_id.lower(), "data": data })

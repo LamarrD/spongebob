@@ -18,7 +18,11 @@ def handler(event, context):
     if 'Item' not in response:
         return {
             "statusCode": 404,
-            'headers': {'Content-Type': 'application/json'},
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": True,
+            },
             "body": json.dumps({"error": "Character not found"})
         }
 
@@ -26,7 +30,11 @@ def handler(event, context):
 
     return {
         "statusCode": 200,
-        'headers': {'Content-Type': 'application/json'},
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": True,
+        },
         "body": json.dumps(character)
     }
 
