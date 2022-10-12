@@ -1,0 +1,7 @@
+// change the theme - https://getbootstrap.com/docs/4.1/getting-started/theming/#css-variables
+$theme-colors: (
+  "primary": #8eb8e5,
+  "secondary": #d1d7a0,
+);
+
+@import "~bootstrap/scss/bootstrap.scss";
