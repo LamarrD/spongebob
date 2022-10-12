@@ -41,6 +41,7 @@ jobs:
           node-version: "14"
       - run: npm ci
         working-directory: frontend
+      - run: npm install -g aws-cdk-lib
       - name: Deploy frontend infrastructure
         run: npm run deploy:cdk
         working-directory: frontend
