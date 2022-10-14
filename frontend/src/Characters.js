@@ -13,7 +13,6 @@ function About() {
   const [fact, setFact] = useState("");
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
 
   useEffect(() => {
     // call api gateway to get characters
@@ -74,8 +73,7 @@ function About() {
                 className="m-1"
                 value={character.id}
                 variant="secondary"
-                onClick={() => changeLikes(character.id, "decrement")}
-              >
+                onClick={() => changeLikes(character.id, "decrement")}>
                 <HandThumbsDown />
               </Button>
               <span className="my-auto"> {character.likes} </span>
@@ -83,8 +81,7 @@ function About() {
                 className="m-1"
                 value={character.id}
                 variant="primary"
-                onClick={() => changeLikes(character.id, "increment")}
-              >
+                onClick={() => changeLikes(character.id, "increment")}>
                 <HandThumbsUp />
               </Button>
             </div>
