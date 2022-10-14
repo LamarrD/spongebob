@@ -4,6 +4,7 @@ from constructs import Construct
 from aws_cdk import (
     aws_apigateway as apigateway,
     aws_lambda as lambda_,
+    aws_lambda_python_alpha as python_lambda,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
 )
@@ -48,15 +49,25 @@ class BackendStack(cdk.Stack):
             self,
             "spongebob-api",
             policy=api_resource_policy,
+            default_cors_preflight_options=apigateway.CorsOptions(
+                allow_origins=apigateway.Cors.ALL_ORIGINS,
+                allow_methods=apigateway.Cors.ALL_METHODS
+            )
         )
         characters = api.root.add_resource("characters")
         character = api.root.add_resource("character").add_resource("{character}")
+        character_fact = character.add_resource("fact")
 
         # Lambdas
         characters_list = create_function(
             self, "characters_list", table, "GET", characters
         )
         character_get = create_function(self, "character_get", table, "GET", character)
+        character_put = create_function(self, "character_put", table, "PUT", character)
+        character_fact_get = create_function(self, "character_fact_get", table, "GET", character_fact)
+        character_fact_get.add_layers(
+        )
+        table.grant_read_write_data(character_put)
 
         # Create a cfn output for the API Gateway URL
         cdk.CfnOutput(self, "API URL", value=api.url)
@@ -71,7 +82,21 @@ def create_function(self, name, table, method, root):
         runtime=lambda_.Runtime.PYTHON_3_8,
         handler=f"{name}.handler",
         environment={"TABLE_NAME": table.table_name},
+        timeout=cdk.Duration.seconds(30),
+        layers=[
+            lambda_.LayerVersion.from_layer_version_arn(
+                self,
+                f"RequestsLayer-{name}",
+                "arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-requests:7",
+            ),
+            lambda_.LayerVersion.from_layer_version_arn(
+                self,
+                f"BeautifulSoup4Layer-{name}",
+                "arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-beautifulsoup4:1",
+        )]
+
     )
     table.grant_read_data(lambda_function)
     lambda_function_integration = apigateway.LambdaIntegration(lambda_function)
     root.add_method(method, lambda_function_integration)
+    return lambda_function

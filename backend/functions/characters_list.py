@@ -2,18 +2,18 @@ import boto3
 import os
 import json
 from boto3.dynamodb.conditions import Key
+from helper import DecimalEncoder
 
 
-table_name = os.getenv('TABLE_NAME')
-table = boto3.resource('dynamodb').Table(table_name)
+table_name = os.getenv("TABLE_NAME")
+table = boto3.resource("dynamodb").Table(table_name)
+
 
 def handler(event, context):
     """List all characters"""
     print("Hello World")
-    response = table.query(
-        KeyConditionExpression=Key('pk').eq('character')
-    )
-    characters = [character['data'] for character in response['Items']]
+    response = table.query(KeyConditionExpression=Key("pk").eq("character"))
+    characters = [character["data"] for character in response["Items"]]
 
     return {
         "statusCode": 200,
@@ -22,6 +22,5 @@ def handler(event, context):
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": True,
         },
-        "body": json.dumps(characters)
+        "body": json.dumps(characters, cls=DecimalEncoder),
     }
-

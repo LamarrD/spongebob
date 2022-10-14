@@ -19,6 +19,33 @@ function About() {
       });
   }, []);
 
+  function changeLikes(id, change)  {
+    fetch(`${process.env.REACT_APP_API}/character/${id}?${change}=true`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", },
+    })
+      .then((results) => results.json())
+      .then((data) => {
+        setCharacters(
+          characters.map((character) => {
+            if (character.id === data.id) { 
+              character.likes = data.likes 
+            }
+            return character;
+          })
+        );
+      });
+  };
+
+  function getRandomFact(id)  {
+    fetch(`${process.env.REACT_APP_API}/character/${id}/fact`)
+      .then((results) => results.text())
+      .then((data) => {
+        console.log(data)
+      });
+  };
+
+
   const characterCards = characters.map((character) => {
     return (
       <Col xs={12} md={6} lg={4} className="mb-4">
@@ -27,13 +54,15 @@ function About() {
           <Card.Body>
             <Card.Title>{character.full_name}</Card.Title>
             <Card.Text>{character.species}</Card.Text>
-            <Button variant="primary">
-              <HandThumbsUp />
-              {character.likes}
-            </Button>
-            <Button variant="secondary">
+            <Button value={character.id} variant="secondary" onClick={() => changeLikes(character.id, "decrement")}>
               <HandThumbsDown />
-              {character.dislikes}
+            </Button>
+              {character.likes}
+            <Button value={character.id} variant="primary" onClick={() => changeLikes(character.id, "increment")}>
+              <HandThumbsUp />
+            </Button>
+            <Button onClick={()=> getRandomFact(character.id)}>
+              Get Random Fact
             </Button>
           </Card.Body>
         </Card>
