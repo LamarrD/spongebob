@@ -10,9 +10,7 @@ table = boto3.resource("dynamodb").Table(table_name)
 
 def handler(event, context):
     """List specific character"""
-    response = table.get_item(
-        Key={"pk": "character", "sk": event["pathParameters"]["character"]}
-    )
+    response = table.get_item( Key={"pk": "character", "sk": event["pathParameters"]["character"]} )
 
     if "Item" not in response:
         return {
@@ -36,3 +34,5 @@ def handler(event, context):
         },
         "body": json.dumps(character, cls=DecimalEncoder),
     }
+
+# handler({"pathParameters": {"character": "karen_plankton"}}, None)
