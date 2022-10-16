@@ -1,7 +1,7 @@
 import boto3
 import os
 import json
-from helper import DecimalEncoder
+from backend.functions.helper import DecimalEncoder
 
 
 table_name = os.getenv("TABLE_NAME")
@@ -34,5 +34,3 @@ def handler(event, context):
         },
         "body": json.dumps(character, cls=DecimalEncoder),
     }
-
-# handler({"pathParameters": {"character": "karen_plankton"}}, None)

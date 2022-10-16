@@ -83,18 +83,6 @@ def create_function(self, name, table, method, root):
         handler=f"{name}.handler",
         environment={"TABLE_NAME": table.table_name},
         timeout=cdk.Duration.seconds(30),
-        layers=[
-            lambda_.LayerVersion.from_layer_version_arn(
-                self,
-                f"RequestsLayer-{name}",
-                "arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-requests:7",
-            ),
-            lambda_.LayerVersion.from_layer_version_arn(
-                self,
-                f"BeautifulSoup4Layer-{name}",
-                "arn:aws:lambda:us-east-1:770693421928:layer:Klayers-p38-beautifulsoup4:1",
-        )]
-
     )
     table.grant_read_data(lambda_function)
     lambda_function_integration = apigateway.LambdaIntegration(lambda_function)

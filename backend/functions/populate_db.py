@@ -1,22 +1,21 @@
 import requests
 import boto3
 import os
+import json
 from bs4 import BeautifulSoup
 from random import randrange
 
 
-table_name = os.getenv("TABLE_NAME")
-table = boto3.resource("dynamodb").Table(table_name)
-
-
 # Data sourced from SpongeBob's Fandom Wiki
-def handler(event, context):
+def get_data():
+    print("Getting data...")
     base_url = "https://spongebob.fandom.com"
     res = requests.get(f"{base_url}/wiki/List_of_characters/Main")
 
     soup = BeautifulSoup(res.text, "html.parser")
     main_char_divs = soup.find_all("div", {"class": "bounceme"})
     main_char_ids = [main.attrs["id"] for main in main_char_divs]
+    table_data = []
 
     for main_char_id in main_char_ids:
         char_link = f"{base_url}/wiki/{main_char_id}"
@@ -48,11 +47,40 @@ def handler(event, context):
             "gallery_link": f"{base_url}/wiki/{main_char_id}/gallery",
             "likes": randrange(1000),
         }
-        # Add to DynamoDB
-        table.put_item(
-            Item={"pk": "character", "sk": main_char_id.lower(), "data": data}
-        )
+        table_data.append({"pk": "character", "sk": main_char_id.lower(), "data": data})
+    
+    
+        char_link = f"{data['link']}"
+        res = requests.get(char_link)
+        char_soup = BeautifulSoup(res.text, "html.parser")
+        description_h2 = char_soup.select('span#Description')[0].parent
+        facts = []
+        next = description_h2.next_sibling
 
+        while next.name != "h2":
+            if next.name == 'p':
+                facts.append(next.text.strip())
+            next = next.nextSibling
+        
+        table_data.append( { "pk": "facts", "sk": main_char_id.lower(), "data": { "facts": json.dumps(facts) } } )
+    
+    
+    json.dump(table_data, open("table_data.json", "w"))
+
+
+def add_data_to_table():
+    print("Adding data to table...")
+    table_name = os.getenv("TABLE_NAME")
+    table = boto3.resource("dynamodb").Table(table_name)
+    table_data = json.load(open("table_data.json"))
+    for item in table_data:
+        table.put_item(Item=item)
+
+
+def main():
+    if not os.path.isfile("table_data.json"):
+        get_data()
+    add_data_to_table()
 
 if __name__ == "__main__":
-    handler(None, None)
+    main()
