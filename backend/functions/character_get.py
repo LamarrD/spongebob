@@ -1,7 +1,7 @@
 import boto3
 import os
 import json
-from backend.functions.helper import DecimalEncoder
+from helper import DecimalEncoder
 
 
 table_name = os.getenv("TABLE_NAME")

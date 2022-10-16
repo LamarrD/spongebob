@@ -2,7 +2,7 @@ import boto3
 import os
 import json
 from boto3.dynamodb.conditions import Key
-from backend.functions.helper import DecimalEncoder
+from helper import DecimalEncoder
 
 
 table_name = os.getenv("TABLE_NAME")
