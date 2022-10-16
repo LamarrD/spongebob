@@ -68,6 +68,7 @@ jobs:
         with:
           python-version: "3.8"
       - run: python -m pip install aws-cdk-lib
+      - run: python -m pip install aws-cdk.aws-lambda-python-alpha
       - name: Deploy backend infrastructure and content
         run: npx cdk deploy --require-approval never
         working-directory: backend/cdk
