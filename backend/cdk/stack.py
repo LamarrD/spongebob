@@ -4,7 +4,6 @@ from constructs import Construct
 from aws_cdk import (
     aws_apigateway as apigateway,
     aws_lambda as lambda_,
-    aws_lambda_python_alpha as python_lambda,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
 )
@@ -58,16 +57,34 @@ class BackendStack(cdk.Stack):
         character = api.root.add_resource("character").add_resource("{character}")
         character_fact = character.add_resource("fact")
 
-        # Lambdas
-        characters_list = create_function(
-            self, "characters_list", table, "GET", characters
+        # Create lambda layer
+        layer = lambda_.LayerVersion(
+            self,
+            "headless-chrome-layer",
+            code=lambda_.Code.from_asset("../tests/canaries/layer-headless-chrome.zip"),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_8],
         )
+
+        # Lambdas
+        characters_list = create_function( self, "characters_list", table, "GET", characters )
         character_get = create_function(self, "character_get", table, "GET", character)
         character_put = create_function(self, "character_put", table, "PUT", character)
         character_fact_get = create_function(self, "character_fact_get", table, "GET", character_fact)
         character_fact_get.add_layers(
         )
         table.grant_read_write_data(character_put)
+
+        # Canaries
+        lambda_.Function(
+            self,
+            "canary_characters",
+            code=lambda_.Code.from_asset("../tests/canaries/e2e/"),
+            timeout=cdk.Duration.seconds(30),
+            handler="characters.handler",
+            runtime=lambda_.Runtime.PYTHON_3_8,
+            layers=[layer],
+            memory_size=1024
+        )
 
         # Create a cfn output for the API Gateway URL
         cdk.CfnOutput(self, "API URL", value=api.url)
