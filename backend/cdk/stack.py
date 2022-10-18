@@ -6,6 +6,14 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
+    aws_s3 as s3,
+    aws_cloudwatch as cloudwatch,
+    aws_cloudwatch_actions as cloudwatch_actions,
+    aws_sns as sns,
+    aws_sns_subscriptions as sns_subscriptions,
+    aws_ssm as ssm,
+    aws_events as events,
+    aws_events_targets as targets,
 )
 
 from consts import CLOUDFRONT_IPS
@@ -27,27 +35,9 @@ class BackendStack(cdk.Stack):
         )
 
         # API Gateway
-        api_resource_policy = iam.PolicyDocument(
-            statements=[
-                iam.PolicyStatement(
-                    actions=["execute-api:Invoke"],
-                    principals=[iam.StarPrincipal()],
-                    resources=["execute-api:/*/*/*"],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.DENY,
-                    principals=[iam.StarPrincipal()],
-                    actions=["execute-api:Invoke"],
-                    resources=["execute-api:/*/*/*"],
-                    conditions={"NotIpAddress": {"aws:SourceIp": CLOUDFRONT_IPS}},
-                ),
-            ]
-        )
-
         api = apigateway.RestApi(
             self,
             "spongebob-api",
-            policy=api_resource_policy,
             default_cors_preflight_options=apigateway.CorsOptions(
                 allow_origins=apigateway.Cors.ALL_ORIGINS,
                 allow_methods=apigateway.Cors.ALL_METHODS
@@ -72,19 +62,22 @@ class BackendStack(cdk.Stack):
         character_fact_get = create_function(self, "character_fact_get", table, "GET", character_fact)
         character_fact_get.add_layers(
         )
+
         table.grant_read_write_data(character_put)
 
+        # S3 buckets for canary screenshots
+        canary_bucket = s3.Bucket( self, "canary-screenshots")
+
+
+        # Canary Alarms and SNS topic
+        canary_topic = sns.Topic(self, "canary-topic")
+        canary_topic.add_subscription(sns_subscriptions.UrlSubscription(
+            ssm.StringParameter.value_for_string_parameter(self, "pd-url"), protocol=sns.SubscriptionProtocol.HTTPS
+        ))
+
         # Canaries
-        lambda_.Function(
-            self,
-            "canary_characters",
-            code=lambda_.Code.from_asset("../tests/canaries/e2e/"),
-            timeout=cdk.Duration.seconds(30),
-            handler="characters.handler",
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            layers=[layer],
-            memory_size=1024
-        )
+        characters_canary = create_canary_function( self, "characters", layer, canary_bucket, canary_topic )
+        home_canary = create_canary_function( self, "home", layer, canary_bucket, canary_topic)
 
         # Create a cfn output for the API Gateway URL
         cdk.CfnOutput(self, "API URL", value=api.url)
@@ -105,3 +98,35 @@ def create_function(self, name, table, method, root):
     lambda_function_integration = apigateway.LambdaIntegration(lambda_function)
     root.add_method(method, lambda_function_integration)
     return lambda_function
+
+
+def create_canary_function(self, name, layer, canary_bucket, canary_topic):
+    """Helper function to create a canaries and setup alarms"""
+    canary = lambda_.Function(
+        self,
+        f"{name}_canary",
+        code=lambda_.Code.from_asset("../tests/canaries/e2e/", exclude=["headless_chrome.py"]),
+        timeout=cdk.Duration.seconds(120),
+        handler=f"{name}.handler",
+        runtime=lambda_.Runtime.PYTHON_3_8,
+        layers=[layer],
+        memory_size=1024,
+        environment={"S3_BUCKET": canary_bucket.bucket_name},
+    )
+    events.Rule(
+        self,
+        f"{name}_canary_alarm",
+        schedule=events.Schedule.expression("rate(1 day)"),
+        targets=[targets.LambdaFunction(canary)],
+    )
+    canary_bucket.grant_read_write( canary )
+    canary_alarm = cloudwatch.Alarm(
+        self,
+        f"{name}_alarm",
+        metric=canary.metric_errors(),
+        threshold=1,
+        evaluation_periods=1,
+        treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
+    )
+    canary_alarm.add_alarm_action( cloudwatch_actions.SnsAction( topic=canary_topic, ) )
+    return canary

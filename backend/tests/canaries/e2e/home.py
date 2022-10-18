@@ -1,3 +1,4 @@
+from helper import upload_screenshot, LambdaContext
 from headless_chrome import create_driver
 from selenium.webdriver.common.by import By
 
@@ -12,3 +13,6 @@ def handler(_event, _context):
 
     assert ele.text == "Welcome to MyLeg.org"
     return "success"
+
+if __name__ == "__main__":
+    handler(None, LambdaContext())
