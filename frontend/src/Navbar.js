@@ -17,14 +17,16 @@ export default function CustomNavbar() {
             className=""
             // style={{ position: "absolute", transform: "translateX(-50%)", left: "50%", float: "none" }}
           >
-            <img height="40" alt="" src="/img/spongebob_logo.png" className="sticky"></img>
+            <img data-qa="logo" height="40" alt="" src="/img/spongebob_logo.png" className="sticky"></img>
           </Navbar.Brand>
         </div>
         <div>
           <Navbar.Toggle aria-controls="navbar" />
           <Navbar.Collapse id="navbar">
             <Nav activeKey={location.pathname}>
-              <Nav.Link href="/characters">Characters</Nav.Link>
+              <Nav.Link id="characters" href="/characters">
+                Characters
+              </Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </div>

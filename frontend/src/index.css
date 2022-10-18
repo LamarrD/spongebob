@@ -30,7 +30,7 @@ html,
 .hero-image {
   /* Use "linear-gradient" to add a darken background effect to the image (photographer.jpg). This will make the text easier to read */
   background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
-    url("https://ih1.redbubble.net/image.869218600.4131/flat,750x,075,f-pad,750x1000,f8f8f8.u7.jpg") center center
+    url("../public/img/fred.jpg") center center
       no-repeat;
 
   /* Set a specific height */

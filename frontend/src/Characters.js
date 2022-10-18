@@ -56,16 +56,16 @@ function About() {
       .then((results) => results.text())
       .then((data) => {
         console.log(data);
-        setFact(data);
+        setFact(<span id="random-fact-body">{data}</span>);
       });
   }
 
   const characterCards = characters.map((character) => {
     return (
-      <Col xs={12} md={6} lg={4} className="mb-4">
+      <Col id="character-list" key={character.id} xs={12} md={6} lg={4} className="mb-4">
         <Card style={{ width: "18rem" }}>
-          <Card.Img variant="top" src={`/img/${character.id}.webp`} />
-          <Card.Body>
+          <Card.Img variant="top" src={`/img/${character.id}.webp`} height="256px" />
+          <Card.Body id={`character-${character.id}`}>
             <Card.Title>{character.full_name}</Card.Title>
             <Card.Text>{character.species}</Card.Text>
             <div className="d-flex justify-content-center">
@@ -73,20 +73,26 @@ function About() {
                 className="m-1"
                 value={character.id}
                 variant="secondary"
-                onClick={() => changeLikes(character.id, "decrement")}>
+                onClick={() => changeLikes(character.id, "decrement")}
+                id="decrement">
                 <HandThumbsDown />
               </Button>
-              <span className="my-auto"> {character.likes} </span>
+              <span data-qa="likes" className="my-auto">
+                {character.likes}
+              </span>
               <Button
                 className="m-1"
                 value={character.id}
                 variant="primary"
-                onClick={() => changeLikes(character.id, "increment")}>
+                onClick={() => changeLikes(character.id, "increment")}
+                id="increment">
                 <HandThumbsUp />
               </Button>
             </div>
             <div className="d-flex justify-content-center">
-              <Button onClick={() => getRandomFact(character)}>Get Random Fact</Button>
+              <Button id={`random-${character.id}`} onClick={() => getRandomFact(character)}>
+                Get Random Fact
+              </Button>
             </div>
           </Card.Body>
         </Card>
@@ -97,7 +103,7 @@ function About() {
     <Container id="about" fluid={true}>
       <Row>{characterCards}</Row>
       <Modal show={show} onHide={handleClose} aria-labelledby="contained-modal-title-vcenter" centered>
-        <Modal.Header closeButton>
+        <Modal.Header id="random-fact-header" closeButton>
           <Modal.Title>Random Fact</Modal.Title>
         </Modal.Header>
         <Modal.Body>{fact}</Modal.Body>
