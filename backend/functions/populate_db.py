@@ -15,45 +15,52 @@ def get_data():
     soup = BeautifulSoup(res.text, "html.parser")
     main_char_divs = soup.find_all("div", {"class": "bounceme"})
     main_char_ids = [main.attrs["id"] for main in main_char_divs]
-    table_data = []
 
-    for main_char_id in main_char_ids:
-        char_link = f"{base_url}/wiki/{main_char_id}"
+    res2 = requests.get(f"{base_url}/wiki/List_of_characters/Supporting")
+    soup = BeautifulSoup(res2.text, "html.parser")
+    supporting_char_divs = soup.find_all("div", {"class": "bounceme"})[:25]
+    supporting_char_ids = [support.attrs["id"] for support in supporting_char_divs]
+    char_ids = ["fred"] + main_char_ids + supporting_char_ids
+
+    table_data = []
+    likes = 1000
+
+    for char_id in char_ids:
+        char_link = f"{base_url}/wiki/{char_id}"
         res = requests.get(char_link)
         char_soup = BeautifulSoup(res.text, "html.parser")
+        full_name = char_soup.find_all("h2", {"data-source": "name"})[0].text
+        default_image = char_soup.find_all( attrs={"data-source": "image"})[0].find_all("img")[0]
+        open(f"./frontend/public/img/{char_id}.webp", 'wb').write(requests.get(default_image.attrs['src']).content)
 
+
+        species = None
+        try:
+            species =  char_soup.find_all("div", {"data-source": "species"})[0] .find_all("div")[0] .text
+        except:
+            species = "Unknown"
+
+        likes = likes - randrange(20)
         data = {
-            "id": main_char_id.lower(),
-            "full_name": char_soup.find_all("h2", {"data-source": "name"})[0].text,
-            "residence": char_soup.find_all("div", {"data-source": "residence"})[0]
-            .find_all("div")[0]
-            .text,
-            "job": char_soup.find_all("div", {"data-source": "occupation(s)"})[0]
-            .find_all("div")[0]
-            .text,
-            "gender": char_soup.find_all("div", {"data-source": "gender"})[0]
-            .find_all("div")[0]
-            .text,
-            "color": char_soup.find_all("div", {"data-source": "color"})[0]
-            .find_all("div")[0]
-            .text,
-            "species": char_soup.find_all("div", {"data-source": "species"})[0]
-            .find_all("div")[0]
-            .text,
-            "default_image": char_soup.find_all("div", {"data-source": "image"})[0]
-            .find_all("img")[0]
-            .attrs["src"],
+            "id": char_id.lower(),
+            "full_name": full_name,
+            "species": species,
             "link": char_link,
-            "gallery_link": f"{base_url}/wiki/{main_char_id}/gallery",
-            "likes": randrange(1000),
+            "gallery_link": f"{base_url}/wiki/{char_id}/gallery",
+            "likes": likes,
         }
-        table_data.append({"pk": "character", "sk": main_char_id.lower(), "data": data})
+        table_data.append({"pk": "character", "sk": char_id.lower(), "data": data})
     
     
         char_link = f"{data['link']}"
         res = requests.get(char_link)
         char_soup = BeautifulSoup(res.text, "html.parser")
-        description_h2 = char_soup.select('span#Description')[0].parent
+        description_h2 = None
+        try:
+            description_h2 = char_soup.select('span#Description')[0].parent
+        except:
+            description_h2 = char_soup.select('span#History')[0].parent
+
         facts = []
         next = description_h2.next_sibling
 
@@ -62,7 +69,7 @@ def get_data():
                 facts.append(next.text.strip())
             next = next.nextSibling
         
-        table_data.append( { "pk": "facts", "sk": main_char_id.lower(), "data": { "facts": json.dumps(facts) } } )
+        table_data.append( { "pk": "facts", "sk": char_id.lower(), "data": { "facts": json.dumps(facts) } } )
     
     
     json.dump(table_data, open("table_data.json", "w"))

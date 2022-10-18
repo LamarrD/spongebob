@@ -12,7 +12,7 @@ table = boto3.resource("dynamodb").Table(table_name)
 def handler(event, context):
     """List all characters"""
     response = table.query(KeyConditionExpression=Key("pk").eq("character"))
-    characters = [character["data"] for character in response["Items"]]
+    characters = sorted([character["data"] for character in response["Items"]], key=lambda x: x["likes"], reverse=True)
 
     return {
         "statusCode": 200,
