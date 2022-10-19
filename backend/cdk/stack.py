@@ -1,4 +1,4 @@
-from constructs import Construct
+import json
 import aws_cdk as cdk
 from constructs import Construct
 from aws_cdk import (
@@ -14,13 +14,20 @@ from aws_cdk import (
     aws_ssm as ssm,
     aws_events as events,
     aws_events_targets as targets,
+    aws_certificatemanager as acm,
+    aws_route53 as route53,
+    aws_route53_targets as route53_targets,
 )
 
 from consts import CLOUDFRONT_IPS
 
+CERTIFICATE_ARN = json.load(open("../../frontend/cdk/outputs.json"))[
+    "Spongebob-Frontend"
+]["certificatearn"]
+
 
 class BackendStack(cdk.Stack):
-    def __init__(self, scope: Construct, id: str):
+    def __init__(self, scope: Construct, id: str, hosted_zone_id: str):
         super().__init__(scope, id)
 
         # Dynamo Table
@@ -40,8 +47,29 @@ class BackendStack(cdk.Stack):
             "spongebob-api",
             default_cors_preflight_options=apigateway.CorsOptions(
                 allow_origins=apigateway.Cors.ALL_ORIGINS,
-                allow_methods=apigateway.Cors.ALL_METHODS
-            )
+                allow_methods=apigateway.Cors.ALL_METHODS,
+            ),
+        )
+        domain = apigateway.DomainName(
+            self,
+            "domain-name",
+            domain_name="api.myleg.org",
+            certificate=acm.Certificate.from_certificate_arn(
+                self, "cert", certificate_arn=CERTIFICATE_ARN
+            ),
+            mapping=api,
+        )
+
+        # Get a reference to the hosted zone AWS automatically creates when you register a domain
+        hosted_zone = route53.HostedZone.from_hosted_zone_attributes(
+            self, "hosted-zone", hosted_zone_id=hosted_zone_id, zone_name="myleg.org"
+        )
+        route53.CnameRecord(
+            self,
+            "CustomDomainAliasRecord",
+            zone=hosted_zone,
+            record_name="api.myleg.org",
+            domain_name=domain.domain_name_alias_domain_name,
         )
         characters = api.root.add_resource("characters")
         character = api.root.add_resource("character").add_resource("{character}")
@@ -56,28 +84,37 @@ class BackendStack(cdk.Stack):
         )
 
         # Lambdas
-        characters_list = create_function( self, "characters_list", table, "GET", characters )
+        characters_list = create_function(
+            self, "characters_list", table, "GET", characters
+        )
         character_get = create_function(self, "character_get", table, "GET", character)
         character_put = create_function(self, "character_put", table, "PUT", character)
-        character_fact_get = create_function(self, "character_fact_get", table, "GET", character_fact)
-        character_fact_get.add_layers(
+        character_fact_get = create_function(
+            self, "character_fact_get", table, "GET", character_fact
         )
+        character_fact_get.add_layers()
 
         table.grant_read_write_data(character_put)
 
         # S3 buckets for canary screenshots
-        canary_bucket = s3.Bucket( self, "canary-screenshots")
-
+        canary_bucket = s3.Bucket(self, "canary-screenshots")
 
         # Canary Alarms and SNS topic
         canary_topic = sns.Topic(self, "canary-topic")
-        canary_topic.add_subscription(sns_subscriptions.UrlSubscription(
-            ssm.StringParameter.value_for_string_parameter(self, "pd-url"), protocol=sns.SubscriptionProtocol.HTTPS
-        ))
+        canary_topic.add_subscription(
+            sns_subscriptions.UrlSubscription(
+                ssm.StringParameter.value_for_string_parameter(self, "pd-url"),
+                protocol=sns.SubscriptionProtocol.HTTPS,
+            )
+        )
 
         # Canaries
-        characters_canary = create_canary_function( self, "characters", layer, canary_bucket, canary_topic )
-        home_canary = create_canary_function( self, "home", layer, canary_bucket, canary_topic)
+        characters_canary = create_canary_function(
+            self, "characters", layer, canary_bucket, canary_topic
+        )
+        home_canary = create_canary_function(
+            self, "home", layer, canary_bucket, canary_topic
+        )
 
         # Create a cfn output for the API Gateway URL
         cdk.CfnOutput(self, "API URL", value=api.url)
@@ -105,7 +142,9 @@ def create_canary_function(self, name, layer, canary_bucket, canary_topic):
     canary = lambda_.Function(
         self,
         f"{name}_canary",
-        code=lambda_.Code.from_asset("../tests/canaries/e2e/", exclude=["headless_chrome.py"]),
+        code=lambda_.Code.from_asset(
+            "../tests/canaries/e2e/", exclude=["headless_chrome.py"]
+        ),
         timeout=cdk.Duration.seconds(120),
         handler=f"{name}.handler",
         runtime=lambda_.Runtime.PYTHON_3_8,
@@ -119,7 +158,7 @@ def create_canary_function(self, name, layer, canary_bucket, canary_topic):
         schedule=events.Schedule.expression("rate(1 day)"),
         targets=[targets.LambdaFunction(canary)],
     )
-    canary_bucket.grant_read_write( canary )
+    canary_bucket.grant_read_write(canary)
     canary_alarm = cloudwatch.Alarm(
         self,
         f"{name}_alarm",
@@ -128,5 +167,9 @@ def create_canary_function(self, name, layer, canary_bucket, canary_topic):
         evaluation_periods=1,
         treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
     )
-    canary_alarm.add_alarm_action( cloudwatch_actions.SnsAction( topic=canary_topic, ) )
+    canary_alarm.add_alarm_action(
+        cloudwatch_actions.SnsAction(
+            topic=canary_topic,
+        )
+    )
     return canary
