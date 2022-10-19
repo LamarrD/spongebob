@@ -21,9 +21,7 @@ from aws_cdk import (
 
 from consts import CLOUDFRONT_IPS
 
-CERTIFICATE_ARN = json.load(open("../../frontend/cdk/outputs.json"))[
-    "Spongebob-Frontend"
-]["certificatearn"]
+
 
 
 class BackendStack(cdk.Stack):
@@ -50,13 +48,13 @@ class BackendStack(cdk.Stack):
                 allow_methods=apigateway.Cors.ALL_METHODS,
             ),
         )
+
+        certificate_arn = ssm.StringParameter.value_for_string_parameter( self, "/spongebob/certificate-arn" )
         domain = apigateway.DomainName(
             self,
             "domain-name",
             domain_name="api.myleg.org",
-            certificate=acm.Certificate.from_certificate_arn(
-                self, "cert", certificate_arn=CERTIFICATE_ARN
-            ),
+            certificate=acm.Certificate.from_certificate_arn( self, "cert", certificate_arn=certificate_arn ),
             mapping=api,
         )
 

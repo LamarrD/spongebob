@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_route53 as route53,
     aws_route53_targets as targets,
     aws_certificatemanager as acm,
+    aws_ssm as ssm,
     Stack,
     CfnOutput,
 )
@@ -24,7 +25,7 @@ class FrontendStack(Stack):
             self, "hosted-zone", hosted_zone_id=hosted_zone_id, zone_name=domain_name
         )
 
-        # Create a certificate for the domain
+        # Create a certificate for the domain, and save ssm param in SSM for backend to use
         certificate = acm.Certificate(
             self,
             "certificate",
@@ -32,6 +33,7 @@ class FrontendStack(Stack):
             subject_alternative_names=[f"*.{domain_name}"],
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
+        ssm.StringParameter( self, "certificate-arn-ssm", parameter_name="/spongebob/certificate-arn", string_value=certificate.certificate_arn, )
 
         # Create a plain bucket for the website to be hosted out of, note we do not name it or make it public
         site_bucket = s3.Bucket(self, "site-bucket")
