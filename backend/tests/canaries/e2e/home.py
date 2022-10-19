@@ -12,6 +12,7 @@ def handler(_event, _context):
     print(ele.text)
 
     assert ele.text == "Welcome to MyLeg.org"
+    driver.close()
     return "success"
 
 if __name__ == "__main__":

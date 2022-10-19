@@ -38,9 +38,7 @@ def handler(event, context):
         for entry in driver.get_log('browser'):
             print(entry)
         raise e
-        
     return "success"
-
 
 
 if __name__ == "__main__":
