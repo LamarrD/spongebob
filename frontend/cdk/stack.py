@@ -29,6 +29,7 @@ class FrontendStack(Stack):
             self,
             "certificate",
             domain_name=domain_name,
+            subject_alternative_names=[f"*.{domain_name}"],
             validation=acm.CertificateValidation.from_dns(hosted_zone),
         )
 
@@ -69,3 +70,4 @@ class FrontendStack(Stack):
         # Create an output of the s3 bucket name so we can reference it when we deploy the frontend content to it
         CfnOutput(self, "bucket-name", value=site_bucket.bucket_name)
         CfnOutput(self, "distribution-id", value=distribution.distribution_id)
+        CfnOutput(self, "certificate-arn", value=certificate.certificate_arn)
