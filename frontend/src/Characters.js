@@ -83,7 +83,7 @@ function About() {
               <Button
                 className="m-1"
                 value={character.id}
-                variant="primary"
+                variant="success"
                 onClick={() => changeLikes(character.id, "increment")}
                 id="increment">
                 <HandThumbsUp />
