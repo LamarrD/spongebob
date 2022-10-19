@@ -31,7 +31,7 @@ def get_data():
         char_soup = BeautifulSoup(res.text, "html.parser")
         full_name = char_soup.find_all("h2", {"data-source": "name"})[0].text
         default_image = char_soup.find_all( attrs={"data-source": "image"})[0].find_all("img")[0]
-        open(f"./frontend/public/img/{char_id}.webp", 'wb').write(requests.get(default_image.attrs['src']).content)
+        open(f"./frontend/public/img/{char_id.lower()}.webp", 'wb').write(requests.get(default_image.attrs['src']).content)
 
 
         species = None
