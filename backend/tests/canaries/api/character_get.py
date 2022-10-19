@@ -1,6 +1,6 @@
 import requests
 
-base_url = "https://0zkrobw7s8.execute-api.us-east-1.amazonaws.com/prod/"
+base_url = "https://api.myleg.org/"
 
 def test_character_get_success():
     res = requests.get(f"{base_url}/character/spongebob_squarepants_(character)")

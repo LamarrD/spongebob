@@ -2,7 +2,7 @@ import requests
 
 
 def test_characters_list_success():
-    base_url = "https://pmnfj06zw7.execute-api.us-east-1.amazonaws.com/prod/"
+    base_url = "https://api.myleg.org/"
     res = requests.get(f"{base_url}/characters/")
     character = res.json()[0]
     expected_keys = sorted(['full_name', 'gender', 'color', 'species', 'gallery_link', 'link', 'residence', 'job'])
