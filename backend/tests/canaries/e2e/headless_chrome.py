@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 
 
 def create_driver():
-    # driver = Chrome("/Users/lamarr/Downloads/chromedriver")
-    driver = Chrome()
+    options = Options()
+    options.add_argument("--start-maximized")
+    driver = Chrome(options=options)
     return driver

@@ -19,10 +19,6 @@ from aws_cdk import (
     aws_route53_targets as route53_targets,
 )
 
-from consts import CLOUDFRONT_IPS
-
-
-
 
 class BackendStack(cdk.Stack):
     def __init__(self, scope: Construct, id: str, hosted_zone_id: str):
@@ -140,9 +136,7 @@ def create_canary_function(self, name, layer, canary_bucket, canary_topic):
     canary = lambda_.Function(
         self,
         f"{name}_canary",
-        code=lambda_.Code.from_asset(
-            "../tests/canaries/e2e/", exclude=["headless_chrome.py"]
-        ),
+        code=lambda_.Code.from_asset( "../tests/canaries/e2e/", exclude=["headless_chrome.py"] ),
         timeout=cdk.Duration.seconds(120),
         handler=f"{name}.handler",
         runtime=lambda_.Runtime.PYTHON_3_8,
@@ -153,7 +147,7 @@ def create_canary_function(self, name, layer, canary_bucket, canary_topic):
     events.Rule(
         self,
         f"{name}_canary_alarm",
-        schedule=events.Schedule.expression("rate(1 day)"),
+        schedule=events.Schedule.expression("rate(15 minutes)"),
         targets=[targets.LambdaFunction(canary)],
     )
     canary_bucket.grant_read_write(canary)
@@ -165,9 +159,5 @@ def create_canary_function(self, name, layer, canary_bucket, canary_topic):
         evaluation_periods=1,
         treat_missing_data=cloudwatch.TreatMissingData.NOT_BREACHING,
     )
-    canary_alarm.add_alarm_action(
-        cloudwatch_actions.SnsAction(
-            topic=canary_topic,
-        )
-    )
+    canary_alarm.add_alarm_action( cloudwatch_actions.SnsAction( topic=canary_topic, ) )
     return canary
