@@ -47,5 +47,14 @@ In order to run selenium in lambda you must add a few packages and binaries. For
 There are many ways to do this, but for this project I followed [This Github Repo](https://github.com/diegoparrilla/headless-chrome-aws-lambda-layer)
 as it is IMO the simplest solution.
 
-Specifically, I publish the layer using [this cdk](backend/cdk/app.py#L51-56). Then, I reference that layer in my lambda functions.
+Specifically, I publish the layer using [this cdk](backend/cdk/app.py). Then, I reference that layer in my lambda functions.
 
+## Other Uses
+Although the main purpose of this project was to show people how to run canaries in lambda, this project
+also serves as a good example of creating a 3-tier **serverless** web application using Python, CDK, and React. 
+
+
+## Acknowledgements
+* [DiegoParilla's lamba layer project](https://github.com/diegoparrilla/headless-chrome-aws-lambda-layer)
+* [Fandom's SpongeBob page](https://spongebob.fandom.com/wiki/Encyclopedia_SpongeBobia)
+* [CDK Diagram Generator](https://github.com/pistazie/cdk-dia)
