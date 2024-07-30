@@ -1,7 +1,7 @@
 
 # [MyLeg.org](https://myleg.org)
 
-This is a demo project built for a [Talk at MomentumDevCon](https://momentumdevcon.com/session/348720). It demonstrates serverless canary testing. The website is a standard serverless 3-tier web app. 
+This is a demo project built for a [Talk at MomentumDevCon]([https://momentumdevcon.com/session/348720](https://2022.momentumdevcon.com/session/348720)). It demonstrates serverless canary testing. The website is a standard serverless 3-tier web app. 
 The content is centered around the guy who lives in a pineapple under the sea.
 
 ## Project Structure
